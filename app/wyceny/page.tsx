@@ -83,7 +83,7 @@ export default function WycenyPage() {
 
       <div className="card p-4 text-xs text-gray-500 bg-gray-50">
         Zatwierdzanie/odrzucanie wycen odbywa sie z poziomu maila do glownego technologa (link jednokrotnego
-        dzialania) - to zapewnia kontrole "human-in-the-loop" przed wyslaniem oferty do klienta. Ten widok jest
+        dzialania) - to zapewnia kontrole &quot;human-in-the-loop&quot; przed wyslaniem oferty do klienta. Ten widok jest
         podgladem statusu, nie edytorem.
       </div>
     </div>
