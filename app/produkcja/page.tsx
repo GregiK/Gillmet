@@ -143,11 +143,6 @@ function ProdukcjaTresc() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gillmet-navy">Produkcja</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Rejestr zlecen produkcyjnych - klient, detal, elementy rysunku zlozeniowego, ilosc sztuk, powloka i
-          uwagi. Kazde zlecenie moze byc powiazane z wycena i zestawieniem BOM z zakladki Opracowanie
-          dokumentacji.
-        </p>
       </div>
 
       <div className="flex gap-2 flex-wrap">

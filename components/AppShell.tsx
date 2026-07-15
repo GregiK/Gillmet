@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
@@ -41,7 +42,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gillmet-bg md:flex">
       <div className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-gillmet-navy text-white px-4 h-14 shadow-sm">
-        <div className="font-semibold tracking-wide text-sm">Gillmet WKS</div>
+        <Link href="/" className="font-semibold tracking-wide text-sm">
+          Gillmet WKS
+        </Link>
         <button
           onClick={() => setMenuOtwarte(true)}
           aria-label="Otworz menu"
@@ -68,7 +71,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           }`}
         >
           <div className="flex items-center justify-between bg-gillmet-navy text-white px-4 h-14 border-b border-white/10">
-            <div className="font-semibold tracking-wide text-sm">Gillmet WKS</div>
+            <Link href="/" onClick={() => setMenuOtwarte(false)} className="font-semibold tracking-wide text-sm">
+              Gillmet WKS
+            </Link>
             <button
               onClick={() => setMenuOtwarte(false)}
               aria-label="Zamknij menu"

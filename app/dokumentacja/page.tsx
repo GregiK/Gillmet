@@ -340,12 +340,6 @@ export default function DokumentacjaPage() {
     <div className="space-y-6 print:space-y-3">
       <div className="print:hidden">
         <h1 className="text-2xl font-semibold text-gillmet-navy">Opracowanie dokumentacji</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Wgraj do 100 rysunkow technicznych (PDF lub DXF) na raz - AI (OpenRouter, model Claude) opracuje kazdy
-          dokument osobno i wyodrebni z nich zapotrzebowanie materialowe (BOM). Ponizej znajdziesz komplet narzedzi
-          kosztorysanta: edycje cen jednostkowych, dodatkowe pozycje kosztowe, kalkulator marzy i ceny koncowej,
-          eksport kosztorysu oraz wysylke zapytania ofertowego do dostawcow.
-        </p>
       </div>
 
       <div className="card p-5 space-y-4 print:hidden">

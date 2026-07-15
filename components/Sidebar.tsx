@@ -34,10 +34,10 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <aside className="w-64 shrink-0 bg-gillmet-navy text-white min-h-screen flex flex-col">
-      <div className="px-5 py-6 border-b border-white/10">
+      <Link href="/" onClick={onNavigate} className="px-5 py-6 border-b border-white/10 block hover:bg-white/5 transition-colors">
         <div className="text-lg font-semibold tracking-wide">Gillmet WKS</div>
         <div className="text-xs text-white/60">MES Dashboard</div>
-      </div>
+      </Link>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);

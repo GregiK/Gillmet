@@ -69,11 +69,6 @@ export default function MagazynPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gillmet-navy">Magazyn</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Zrob zdjecie telefonem (lub wgraj skan) dokumentu dostawy z hurtowni - AI odczyta dostawce, numer
-          dokumentu oraz liste dostarczonych ksztaltownikow (profil, gatunek, dlugosc, ilosc) i doda je do stanu
-          magazynowego.
-        </p>
       </div>
 
       <div className="card p-5 space-y-4">
