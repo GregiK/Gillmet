@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/wyceny", label: "Wyceny", icon: "PLN" },
@@ -10,8 +11,25 @@ const NAV_ITEMS = [
   { href: "/produkcja", label: "Produkcja", icon: "PRD" },
 ];
 
+type Me = { email: string; rola: string; imie_nazwisko: string };
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setMe)
+      .catch(() => setMe(null));
+  }, []);
+
+  const wyloguj = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <aside className="w-64 shrink-0 bg-gillmet-navy text-white min-h-screen flex flex-col">
@@ -39,6 +57,15 @@ export default function Sidebar() {
       <div className="px-5 py-4 border-t border-white/10 text-[11px] text-white/40">
         Konstrukcje stalowe S235 / S355
       </div>
+      {me && (
+        <div className="px-5 py-4 border-t border-white/10 text-xs">
+          <div className="text-white/90 font-medium">{me.imie_nazwisko || me.email}</div>
+          <div className="text-white/40">{me.rola}</div>
+          <button onClick={wyloguj} className="mt-2 text-white/60 hover:text-white underline">
+            Wyloguj
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

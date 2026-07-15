@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Gillmet MES Dashboard",
@@ -10,9 +10,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
-      <body className="flex min-h-screen bg-gillmet-bg">
-        <Sidebar />
-        <main className="flex-1 min-w-0 p-6">{children}</main>
+      <body className="min-h-screen bg-gillmet-bg">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

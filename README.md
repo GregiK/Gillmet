@@ -31,13 +31,48 @@ Tables i udostępniane przez webhooki:
 | `/api/zlecenia` | POST | Utworzenie nowego zlecenia |
 | `/api/zlecenia?zlecenie_id=...` | DELETE | Usunięcie zlecenia |
 | `/api/bom?zlecenie_id=...` | GET | Pozycje BOM dla zlecenia |
-| `/api/dokumentacja/import` | POST (multipart) | Import do 10 plików PDF/DXF — AI (OpenRouter) wyodrębnia BOM |
+| `/api/bom?pozycja_id=...` | DELETE | Usunięcie pozycji BOM |
+| `/api/bom` | PATCH | Aktualizacja ceny jednostkowej pozycji BOM |
+| `/api/dokumentacja/import` | POST (multipart) | Import do 100 plików PDF/DXF (wysyłane w paczkach po 10) — AI (OpenRouter) wyodrębnia BOM |
+| `/api/dokumentacja/wyslij-oferte` | POST | Wysyłka zapytania ofertowego (pełny BOM) do dostawców e-mailem |
 | `/api/optymalizacja` | POST | Optymalizacja cięcia (bin-packing, pręty 6m/12m) dla zlecenia |
+| `/api/optymalizacja?wynik_id=...` | DELETE | Usunięcie wyniku optymalizacji |
+| `/api/koszty-dodatkowe?zlecenie_id=...` | GET | Dodatkowe pozycje kosztowe zlecenia |
+| `/api/koszty-dodatkowe` | POST | Dodanie pozycji kosztowej |
+| `/api/koszty-dodatkowe?pozycja_id=...` | DELETE | Usunięcie pozycji kosztowej |
+| `/api/zlecenia` | PATCH | Aktualizacja marży zlecenia |
+| `/api/auth/register` | POST | Rejestracja bootstrap (działa tylko, gdy nie istnieje jeszcze żaden użytkownik) |
+| `/api/auth/login` | POST | Logowanie (weryfikacja hasła, hash+sól SHA-256) |
 | `/api/wyceny` | GET | Wyceny z automatyzacji zapytań klientów, status weryfikacji technologa |
+
+## Logowanie i role
+
+Dashboard wymaga zalogowania (middleware chroni wszystkie strony poza `/login`). Sesja to podpisany (HMAC,
+`SESSION_SECRET`) cookie ustawiany przez własne endpointy Next.js `/api/auth/login` i `/api/auth/register` — nie
+zależy od tabeli n8n `sesje`. Role: `admin` / `technolog` / `kosztorysant` — każda z nich może korygować ceny i
+marże bezpośrednio w zakładce **Opracowanie dokumentacji**.
+
+**Pierwsze uruchomienie**: wejdź na `/login`, przełącz na zakładkę "Pierwsza konfiguracja" i utwórz konto — działa
+to tylko raz (dopóki tabela `uzytkownicy` jest pusta), więc utwórz od razu docelowe konto administratora.
+
+**WAŻNE**: ustaw zmienną środowiskową `SESSION_SECRET` w Vercel (Project Settings → Environment Variables) na
+długi losowy ciąg znaków — bez tego użyty zostanie niebezpieczny sekret domyślny z kodu.
+
+## Narzędzia kosztorysanta (zakładka Opracowanie dokumentacji)
+
+- Edycja ceny jednostkowej każdej pozycji BOM (zapis od razu do bazy).
+- Dodatkowe pozycje kosztowe (transport, obróbka powierzchniowa, spawanie zewnętrzne, montaż, inne).
+- Kalkulator marży i ceny końcowej (koszt materiału + koszty dodatkowe, marża w %, zapis marży do zlecenia).
+- Eksport kosztorysu do Excel (CSV) i do PDF (drukowanie widoku).
+- Wysyłka zapytania ofertowego (pełny BOM) do dostawców e-mailem (Gmail), formularz ad-hoc bez bazy dostawców.
+- Kasowanie pozycji BOM i wyników optymalizacji cięcia.
+
+Kasowanie całych zleceń dostępne jest w zakładce **Produkcja**.
 
 ## AI — import dokumentacji technicznej
 
-Zakładka **Opracowanie dokumentacji** pozwala wgrać jednocześnie do 10 rysunków PDF/DXF. Backend:
+Zakładka **Opracowanie dokumentacji** pozwala wgrać jednocześnie do 100 rysunków PDF/DXF (dashboard wysyła je do
+backendu automatycznie w paczkach po 10, żeby nie przeciążyć pojedynczego zapytania). Backend:
 
 1. Rozbija paczkę na pojedyncze pliki.
 2. Dla PDF — wyodrębnia tekst (`n8n-nodes-base.extractFromFile`, operacja `pdf`).
