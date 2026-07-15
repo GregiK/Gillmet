@@ -148,3 +148,36 @@ export async function wyslijOferteDoDostawcow(payload: {
 }) {
   return apiFetch("/api/dokumentacja/wyslij-oferte", { method: "POST", body: JSON.stringify(payload) });
 }
+
+export type DostawaMagazynowa = {
+  dostawa_id: string;
+  pozycja_id: string;
+  data_dostawy: string;
+  dostawca: string;
+  numer_dokumentu: string;
+  profil: string;
+  gatunek: string;
+  dlugosc_mm: number;
+  ilosc: number;
+  jednostka: string;
+  zrodlo_pliku: string;
+  uwagi: string;
+  dodano_kiedy: string;
+};
+
+export async function getMagazyn(): Promise<{ dostawy: DostawaMagazynowa[] }> {
+  return apiFetch("/api/magazyn");
+}
+
+export async function deleteDostawaMagazynowa(pozycjaId: string) {
+  return apiFetch(`/api/magazyn?pozycja_id=${encodeURIComponent(pozycjaId)}`, { method: "DELETE" });
+}
+
+export async function skanujDostawe(files: File[], uwagi?: string) {
+  const form = new FormData();
+  if (uwagi) form.append("uwagi", uwagi);
+  files.forEach((f, i) => form.append(`data${i}`, f, f.name));
+  const res = await fetch(`${BASE_URL}/api/magazyn/skan`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`Blad skanowania dostawy: ${res.status}`);
+  return res.json();
+}

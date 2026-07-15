@@ -17,21 +17,49 @@ function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [blad, setBlad] = useState<string | null>(googleError);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const DEMO_EMAIL = "demo@gillmet.pl";
+  const DEMO_HASLO = "Gillmet2026!";
+
+  const zalogujSie = async (loginEmail: string, loginHaslo: string) => {
     setBusy(true);
     setBlad(null);
     try {
-      const url = tryb === "logowanie" ? "/api/auth/login" : "/api/auth/register";
-      const payload = tryb === "logowanie" ? { email, haslo } : { email, haslo, imie_nazwisko: imie };
-      const res = await fetch(url, {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ email: loginEmail, haslo: loginHaslo }),
       });
       const data = await res.json();
       if (!res.ok) {
         setBlad(data.error || "Blad logowania.");
+        return;
+      }
+      router.push(next);
+      router.refresh();
+    } catch (e) {
+      setBlad((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tryb === "logowanie") {
+      await zalogujSie(email, haslo);
+      return;
+    }
+    setBusy(true);
+    setBlad(null);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, haslo, imie_nazwisko: imie }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setBlad(data.error || "Blad rejestracji.");
         return;
       }
       router.push(next);
@@ -49,6 +77,23 @@ function LoginForm() {
         <div>
           <div className="text-lg font-semibold text-gillmet-navy tracking-wide">GILLMET</div>
           <div className="text-xs text-gray-500">MES Dashboard - logowanie</div>
+        </div>
+
+        <div className="border border-dashed border-gillmet-accent rounded-md p-3 space-y-2 bg-amber-50">
+          <div className="text-xs font-semibold text-gillmet-navy">Konto demonstracyjne</div>
+          <div className="text-xs text-gray-600">
+            E-mail: <span className="font-mono">{DEMO_EMAIL}</span>
+            <br />
+            Haslo: <span className="font-mono">{DEMO_HASLO}</span>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => zalogujSie(DEMO_EMAIL, DEMO_HASLO)}
+            className="w-full bg-gillmet-navy text-white text-xs font-semibold py-2 rounded-md disabled:opacity-50"
+          >
+            Zaloguj jako demo
+          </button>
         </div>
 
         <a

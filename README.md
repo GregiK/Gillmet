@@ -47,6 +47,9 @@ Tables i udostępniane przez webhooki:
 | `/api/auth/forgot-password` | POST | Wysyłka linku do resetu hasła e-mailem |
 | `/api/auth/reset-password` | POST | Ustawienie nowego hasła na podstawie tokenu z linku |
 | `/api/wyceny` | GET | Wyceny z automatyzacji zapytań klientów, status weryfikacji technologa |
+| `/api/magazyn` | GET | Lista dostaw / stan magazynowy kształtowników |
+| `/api/magazyn/skan` | POST (multipart) | Skan/zdjęcie dokumentu dostawy (WZ, faktura) — AI (OpenRouter, model wizyjny) odczytuje dostawcę i pozycje |
+| `/api/magazyn?pozycja_id=...` | DELETE | Usunięcie pozycji dostawy |
 
 ## Logowanie i role
 
@@ -80,6 +83,18 @@ mógłby inaczej sobie założyć konto). Żeby uruchomić:
 7. Redeploy (Vercel → Deployments → ... → Redeploy).
 
 Bez tych zmiennych logowanie hasłem działa normalnie — przycisk Google po prostu pokaże błąd konfiguracji.
+
+### Magazyn — skan dostaw AI
+
+Zakładka **Magazyn** pozwala sfotografować telefonem (przycisk otwiera aparat na urządzeniach mobilnych, `capture="environment"`) lub wgrać skan/PDF dokumentu dostawy (WZ, faktura). Backend wysyła zdjęcie do modelu wizyjnego (OpenRouter, `anthropic/claude-3.5-sonnet`) z instrukcją odczytania dostawcy, numeru dokumentu oraz listy pozycji (profil, gatunek, długość, ilość) — bez zmyślania: niepewne pozycje trafiają do pola uwag zamiast być zgadywane. Wynik trafia do tabeli `dostawy_magazynowe`, a zakładka pokazuje zarówno historię dostaw, jak i zsumowany stan magazynowy według profilu.
+
+### Konto demonstracyjne
+
+Na `/login` widoczne są dane konta demo (`demo@gillmet.pl`) z przyciskiem szybkiego logowania — ułatwia to testowanie
+panelu. **Uwaga bezpieczeństwa**: to konto ma pełne uprawnienia funkcjonalne (m.in. wysyłka realnych e-maili RFQ do
+dostawców, kasowanie danych) — widoczne hasło na ekranie logowania oznacza, że każdy odwiedzający może z niego
+skorzystać. Zalecane tylko na czas testów/demo — potem usuń sekcję z `app/login/page.tsx` albo dezaktywuj konto
+(`aktywny: false` w tabeli `uzytkownicy`).
 
 ### Reset hasła
 
