@@ -11,6 +11,8 @@ export function middleware(req: NextRequest) {
 
   const isPublic =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/zapomniane-haslo") ||
+    pathname.startsWith("/reset-hasla") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";

@@ -5,7 +5,10 @@ import Sidebar from "@/components/Sidebar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLogin = pathname?.startsWith("/login");
+  const isLogin =
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/zapomniane-haslo") ||
+    pathname?.startsWith("/reset-hasla");
 
   if (isLogin) {
     return <>{children}</>;

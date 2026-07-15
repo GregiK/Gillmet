@@ -43,6 +43,9 @@ Tables i udostępniane przez webhooki:
 | `/api/zlecenia` | PATCH | Aktualizacja marży zlecenia |
 | `/api/auth/register` | POST | Rejestracja bootstrap (działa tylko, gdy nie istnieje jeszcze żaden użytkownik) |
 | `/api/auth/login` | POST | Logowanie (weryfikacja hasła, hash+sól SHA-256) |
+| `/api/auth/uzytkownik?email=...` | GET | Sprawdzenie czy konto istnieje (używane przez logowanie Google) |
+| `/api/auth/forgot-password` | POST | Wysyłka linku do resetu hasła e-mailem |
+| `/api/auth/reset-password` | POST | Ustawienie nowego hasła na podstawie tokenu z linku |
 | `/api/wyceny` | GET | Wyceny z automatyzacji zapytań klientów, status weryfikacji technologa |
 
 ## Logowanie i role
@@ -57,6 +60,32 @@ to tylko raz (dopóki tabela `uzytkownicy` jest pusta), więc utwórz od razu do
 
 **WAŻNE**: ustaw zmienną środowiskową `SESSION_SECRET` w Vercel (Project Settings → Environment Variables) na
 długi losowy ciąg znaków — bez tego użyty zostanie niebezpieczny sekret domyślny z kodu.
+
+### Logowanie przez Google
+
+Przycisk "Zaloguj przez Google" na `/login` działa tylko dla adresów e-mail, które **już istnieją** jako konto w
+systemie (to alternatywny sposób logowania na istniejące konto, a nie publiczna rejestracja — każdy z Gmailem
+mógłby inaczej sobie założyć konto). Żeby uruchomić:
+
+1. Wejdź na [console.cloud.google.com](https://console.cloud.google.com), wybierz/utwórz projekt.
+2. **APIs & Services → OAuth consent screen** — typ "External", uzupełnij nazwę aplikacji (np. "Gillmet MES
+   Dashboard") i swój e-mail jako kontakt. Zapisz.
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID** — typ aplikacji: "Web application".
+4. W polu **Authorized redirect URIs** dodaj dokładnie: `https://gillmet.vercel.app/api/auth/google/callback`
+5. Zapisz — dostaniesz **Client ID** i **Client Secret**.
+6. W Vercel (Project Settings → Environment Variables) dodaj:
+   - `GOOGLE_CLIENT_ID` = skopiowany Client ID
+   - `GOOGLE_CLIENT_SECRET` = skopiowany Client Secret
+   - `GOOGLE_REDIRECT_URI` = `https://gillmet.vercel.app/api/auth/google/callback`
+7. Redeploy (Vercel → Deployments → ... → Redeploy).
+
+Bez tych zmiennych logowanie hasłem działa normalnie — przycisk Google po prostu pokaże błąd konfiguracji.
+
+### Reset hasła
+
+Link "Nie pamiętasz hasła?" na `/login` wysyła e-mail (przez Gmail już podpięty w n8n) z jednorazowym linkiem
+ważnym 1 godzinę. Ze względów bezpieczeństwa odpowiedź jest zawsze taka sama, niezależnie od tego, czy podany
+adres e-mail istnieje w systemie.
 
 ## Narzędzia kosztorysanta (zakładka Opracowanie dokumentacji)
 
