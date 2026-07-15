@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
+  { href: "/", label: "Dashboard", icon: "DSH" },
   { href: "/wyceny", label: "Wyceny", icon: "PLN" },
   { href: "/dokumentacja", label: "Opracowanie dokumentacji", icon: "DOC" },
   { href: "/magazyn", label: "Magazyn", icon: "MAG" },
@@ -33,13 +34,13 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <aside className="w-64 shrink-0 bg-gillmet-navy text-white min-h-screen flex flex-col">
-      <div className="px-5 py-6 border-b border-white/10 hidden md:block">
-        <div className="text-lg font-semibold tracking-wide">GILLMET</div>
+      <div className="px-5 py-6 border-b border-white/10">
+        <div className="text-lg font-semibold tracking-wide">Gillmet WKS</div>
         <div className="text-xs text-white/60">MES Dashboard</div>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const active = pathname?.startsWith(item.href);
+          const active = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

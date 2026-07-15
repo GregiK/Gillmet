@@ -54,7 +54,7 @@ function ResetForm() {
     <div className="min-h-screen w-full flex items-center justify-center bg-gillmet-bg px-4">
       <div className="card w-full max-w-sm p-6 space-y-5">
         <div>
-          <div className="text-lg font-semibold text-gillmet-navy tracking-wide">GILLMET</div>
+          <div className="text-lg font-semibold text-gillmet-navy tracking-wide">Gillmet WKS</div>
           <div className="text-xs text-gray-500">Ustaw nowe haslo</div>
         </div>
 

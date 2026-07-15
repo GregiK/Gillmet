@@ -7,8 +7,8 @@
 }
 
 body {
-  background-color: #f4f6f8;
-  color: #0f1b2d;
+  background-color: #f3f7f4;
+  color: #0e3b2c;
 }
 
 .card {
@@ -17,4 +17,13 @@ body {
 
 .badge {
   @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+@keyframes pasek {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
 }

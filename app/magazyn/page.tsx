@@ -126,7 +126,24 @@ export default function MagazynPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">
             Stan magazynowy (suma dostaw wedlug profilu)
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Karty - telefon */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {stanMagazynowy.map((s) => (
+              <div key={`${s.profil}-${s.gatunek}-${s.jednostka}`} className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{s.profil}</div>
+                  <div className="text-xs text-gray-400">{s.gatunek}</div>
+                </div>
+                <div className="text-sm font-medium text-gillmet-navy">
+                  {s.ilosc} {s.jednostka}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabela - tablet/desktop */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                 <tr>
@@ -160,7 +177,34 @@ export default function MagazynPage() {
       {!loading && dostawy.length > 0 && (
         <div className="card overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">Historia dostaw</div>
-          <div className="overflow-x-auto">
+
+          {/* Karty - telefon */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {dostawy.map((d) => (
+              <div key={d.pozycja_id} className="px-4 py-3 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium">{d.profil}</div>
+                  <div className="text-sm text-gillmet-navy font-medium shrink-0">
+                    {d.ilosc} {d.jednostka}
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">
+                  {d.gatunek} - {d.dlugosc_mm ? `${d.dlugosc_mm} mm` : "dlugosc nieznana"}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {d.dostawca || "Dostawca nieznany"} {d.numer_dokumentu ? `- ${d.numer_dokumentu}` : ""}
+                  {d.data_dostawy ? ` - ${d.data_dostawy}` : ""}
+                </div>
+                {d.uwagi && <div className="text-xs text-gray-400 italic">{d.uwagi}</div>}
+                <button onClick={() => usunPozycje(d.pozycja_id)} className="text-red-600 text-xs hover:underline pt-1">
+                  Usun
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabela - tablet/desktop */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                 <tr>

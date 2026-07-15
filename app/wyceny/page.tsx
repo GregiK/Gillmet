@@ -43,44 +43,70 @@ export default function WycenyPage() {
       )}
 
       {!loading && wyceny.length > 0 && (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="text-left px-4 py-3">Klient</th>
-                <th className="text-left px-4 py-3">Temat zapytania</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Utworzono</th>
-                <th className="text-left px-4 py-3">Decyzja</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {wyceny.map((w) => {
-                const s = STATUS_LABEL[w.status] || { label: w.status, className: "bg-gray-100 text-gray-700" };
-                return (
-                  <tr key={w.quote_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+        <>
+          {/* Widok kartowy - telefon */}
+          <div className="md:hidden space-y-3">
+            {wyceny.map((w) => {
+              const s = STATUS_LABEL[w.status] || { label: w.status, className: "bg-gray-100 text-gray-700" };
+              return (
+                <div key={w.quote_id} className="card p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
                       <div className="font-medium text-gillmet-navy">{w.client_company || "-"}</div>
                       <div className="text-xs text-gray-400">{w.client_email}</div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{w.email_subject || "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`badge ${s.className}`}>{s.label}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {w.created_at ? new Date(w.created_at).toLocaleString("pl-PL") : "-"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {w.decided_at ? new Date(w.decided_at).toLocaleString("pl-PL") : "-"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                    <span className={`badge shrink-0 ${s.className}`}>{s.label}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">{w.email_subject || "-"}</div>
+                  <div className="flex justify-between text-xs text-gray-400 pt-2 border-t border-gray-100">
+                    <span>Utworzono: {w.created_at ? new Date(w.created_at).toLocaleDateString("pl-PL") : "-"}</span>
+                    <span>Decyzja: {w.decided_at ? new Date(w.decided_at).toLocaleDateString("pl-PL") : "-"}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+
+          {/* Widok tabelaryczny - tablet/desktop */}
+          <div className="card overflow-hidden hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                  <tr>
+                    <th className="text-left px-4 py-3">Klient</th>
+                    <th className="text-left px-4 py-3">Temat zapytania</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-left px-4 py-3">Utworzono</th>
+                    <th className="text-left px-4 py-3">Decyzja</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {wyceny.map((w) => {
+                    const s = STATUS_LABEL[w.status] || { label: w.status, className: "bg-gray-100 text-gray-700" };
+                    return (
+                      <tr key={w.quote_id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gillmet-navy">{w.client_company || "-"}</div>
+                          <div className="text-xs text-gray-400">{w.client_email}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{w.email_subject || "-"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`badge ${s.className}`}>{s.label}</span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {w.created_at ? new Date(w.created_at).toLocaleString("pl-PL") : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {w.decided_at ? new Date(w.decided_at).toLocaleString("pl-PL") : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       <div className="card p-4 text-xs text-gray-500 bg-gray-50">

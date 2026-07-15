@@ -6,10 +6,10 @@ const config: Config = {
     extend: {
       colors: {
         gillmet: {
-          navy: "#0f1b2d",
-          steel: "#2f3e50",
-          accent: "#c8a951",
-          bg: "#f4f6f8",
+          navy: "#0e3b2c",
+          steel: "#2f6b4f",
+          accent: "#7fc242",
+          bg: "#f3f7f4",
         },
       },
     },

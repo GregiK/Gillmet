@@ -15,6 +15,10 @@ export type Zlecenie = {
   powiazana_wycena_id: string;
   notatki: string;
   marza_procent?: number;
+  ilosc_sztuk?: number;
+  rodzaj_powloki?: string;
+  elementy_zlozeniowe?: string;
+  data_zakonczenia?: string;
 };
 
 export type PozycjaBom = {
@@ -90,6 +94,13 @@ export async function updateMarzaZlecenia(zlecenieId: string, marzaProcent: numb
   return apiFetch("/api/zlecenia", {
     method: "PATCH",
     body: JSON.stringify({ zlecenie_id: zlecenieId, marza_procent: marzaProcent }),
+  });
+}
+
+export async function updateZlecenie(zlecenieId: string, payload: Partial<Zlecenie>) {
+  return apiFetch("/api/zlecenia", {
+    method: "PATCH",
+    body: JSON.stringify({ ...payload, zlecenie_id: zlecenieId }),
   });
 }
 

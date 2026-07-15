@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addKosztDodatkowy,
   createZlecenie,
@@ -45,8 +45,58 @@ export default function DokumentacjaPage() {
   const [dostawcaEmail, setDostawcaEmail] = useState("");
   const [wiadomoscRfq, setWiadomoscRfq] = useState("");
 
+  const [postep, setPostep] = useState<{
+    etap: "wysylanie" | "przetwarzanie" | "gotowe" | "blad";
+    paczkaAktualna: number;
+    paczkaLacznie: number;
+    liczbaPlikow: number;
+    sekundy: number;
+    noweBomPozycje: number;
+  } | null>(null);
+  const monitorRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const MAX_PLIKOW = 100;
   const ROZMIAR_PACZKI = 10;
+
+  // Sprzatanie interwalu monitorowania przy odmontowaniu komponentu.
+  useEffect(() => {
+    return () => {
+      if (monitorRef.current) clearInterval(monitorRef.current);
+    };
+  }, []);
+
+  const monitorujPrzetwarzanie = useCallback(
+    (zid: string, liczbaBomPrzedWyslaniem: number) => {
+      if (monitorRef.current) clearInterval(monitorRef.current);
+      const MAX_SEKUND = 240; // przestan sprawdzac po 4 minutach, AI powinno zdazyc
+      monitorRef.current = setInterval(async () => {
+        setPostep((p) => {
+          if (!p) return p;
+          const noweSekundy = p.sekundy + 3;
+          if (noweSekundy >= MAX_SEKUND) {
+            if (monitorRef.current) clearInterval(monitorRef.current);
+          }
+          return { ...p, sekundy: noweSekundy };
+        });
+        try {
+          const res = await getBom(zid);
+          const pozycje = res.pozycje_bom || [];
+          setBom(pozycje);
+          if (pozycje.length > liczbaBomPrzedWyslaniem) {
+            if (monitorRef.current) clearInterval(monitorRef.current);
+            setPostep((p) =>
+              p ? { ...p, etap: "gotowe", noweBomPozycje: pozycje.length - liczbaBomPrzedWyslaniem } : p
+            );
+            setStatus(`AI zakonczyla obliczenia - dodano ${pozycje.length - liczbaBomPrzedWyslaniem} pozycji BOM.`);
+            setTimeout(() => setPostep(null), 6000);
+          }
+        } catch {
+          // ciche ponowienie przy nastepnym tyknieciu - bledy sieciowe nie powinny przerywac monitorowania
+        }
+      }, 3000);
+    },
+    []
+  );
 
   const utworzZlecenie = useCallback(async () => {
     setBusy(true);
@@ -78,26 +128,40 @@ export default function DokumentacjaPage() {
       return;
     }
     setBusy(true);
+    const liczbaBomPrzedWyslaniem = bom.length;
     try {
       const paczki: File[][] = [];
       for (let i = 0; i < files.length; i += ROZMIAR_PACZKI) {
         paczki.push(files.slice(i, i + ROZMIAR_PACZKI));
       }
+      setPostep({
+        etap: "wysylanie",
+        paczkaAktualna: 0,
+        paczkaLacznie: paczki.length,
+        liczbaPlikow: files.length,
+        sekundy: 0,
+        noweBomPozycje: 0,
+      });
       for (let i = 0; i < paczki.length; i++) {
         setStatus(
           `Wysylanie do AI: paczka ${i + 1}/${paczki.length} (${paczki[i].length} plikow z ${files.length})...`
         );
+        setPostep((p) => (p ? { ...p, paczkaAktualna: i + 1 } : p));
         await importDokumentacja(zlecenieId, paczki[i]);
       }
       setStatus(
-        `Wszystkie ${files.length} plikow przyjete (w ${paczki.length} paczkach). AI przetwarza je w tle (ekstrakcja profili, gatunkow, dlugosci i ilosci) - przy wiekszej liczbie rysunkow moze to potrwac kilkanascie minut. Kliknij "Odswiez BOM" za chwile.`
+        `Wszystkie ${files.length} plikow przyjete (w ${paczki.length} paczkach). AI przetwarza je w tle (ekstrakcja profili, gatunkow, dlugosci i ilosci).`
       );
+      setPostep((p) => (p ? { ...p, etap: "przetwarzanie" } : p));
+      monitorujPrzetwarzanie(zlecenieId, liczbaBomPrzedWyslaniem);
     } catch (e) {
       setStatus(`Blad wysylki: ${(e as Error).message}`);
+      setPostep((p) => (p ? { ...p, etap: "blad" } : p));
+      setTimeout(() => setPostep(null), 5000);
     } finally {
       setBusy(false);
     }
-  }, [zlecenieId, files]);
+  }, [zlecenieId, files, bom.length, monitorujPrzetwarzanie]);
 
   const odswiezBom = useCallback(async () => {
     if (!zlecenieId) return;
@@ -335,6 +399,62 @@ export default function DokumentacjaPage() {
           </button>
         </div>
 
+        {postep && (
+          <div className="border border-gray-200 rounded-md p-3 space-y-2">
+            {postep.etap === "wysylanie" && (
+              <>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Wysylanie plikow do AI...</span>
+                  <span>
+                    {postep.paczkaAktualna}/{postep.paczkaLacznie} paczek
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full bg-gillmet-accent transition-all duration-300"
+                    style={{ width: `${Math.round((postep.paczkaAktualna / postep.paczkaLacznie) * 100)}%` }}
+                  />
+                </div>
+              </>
+            )}
+
+            {postep.etap === "przetwarzanie" && (
+              <>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-gillmet-accent animate-pulse" />
+                    AI oblicza zapotrzebowanie materialowe i przygotowuje wycene...
+                  </span>
+                  <span>
+                    {Math.floor(postep.sekundy / 60)}:{String(postep.sekundy % 60).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-100 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gillmet-accent to-transparent w-1/3 animate-[pasek_1.4s_ease-in-out_infinite]" />
+                </div>
+                <div className="text-[11px] text-gray-400">
+                  Strona sprawdza wynik automatycznie co kilka sekund - nie musisz odswiezac recznie.
+                </div>
+              </>
+            )}
+
+            {postep.etap === "gotowe" && (
+              <div className="flex items-center gap-2 text-sm text-emerald-700">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                Gotowe - AI dodala {postep.noweBomPozycje} {postep.noweBomPozycje === 1 ? "pozycje" : "pozycji"} do
+                zestawienia BOM ponizej.
+              </div>
+            )}
+
+            {postep.etap === "blad" && (
+              <div className="flex items-center gap-2 text-sm text-red-600">
+                <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                Wystapil blad wysylki - sprobuj ponownie.
+              </div>
+            )}
+          </div>
+        )}
+
         {status && <div className="text-sm text-gray-700 bg-gray-50 rounded-md p-3">{status}</div>}
       </div>
 
@@ -362,7 +482,45 @@ export default function DokumentacjaPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm flex justify-between items-center">
             <span>Zestawienie materialowe (BOM) - edycja cen jednostkowych</span>
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Karty - telefon */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {bom.map((b) => (
+              <div key={b.pozycja_id} className="px-4 py-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium">{b.profil}</div>
+                    <div className="text-xs text-gray-400">
+                      {b.gatunek} - {b.dlugosc_mm} mm - {b.ilosc} szt
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-gillmet-navy shrink-0">
+                    {((b.ilosc || 0) * (b.cena_jednostkowa || 0)).toFixed(2)} zl
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 shrink-0">Cena jedn.</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    inputMode="decimal"
+                    className="border border-gray-200 rounded px-2 py-1.5 w-24 text-sm"
+                    defaultValue={b.cena_jednostkowa || 0}
+                    onBlur={(e) => zapiszCeneBom(b.pozycja_id, Number(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span>{b.zrodlo_pliku}</span>
+                  <button onClick={() => usunPozycjeBom(b.pozycja_id)} className="text-red-600 hover:underline">
+                    Usun
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabela - tablet/desktop/druk */}
+          <div className="overflow-x-auto hidden md:block print:block">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>
@@ -413,7 +571,27 @@ export default function DokumentacjaPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">
             Optymalizacja ciecia (pret 6m vs 12m)
           </div>
-          <div className="overflow-x-auto">
+
+          {/* Karty - telefon */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {wyniki.map((w) => (
+              <div key={w.wynik_id} className="px-4 py-3 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium">{w.profil}</div>
+                  <div className="text-xs text-gray-400">{w.gatunek}</div>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Pretow 6m: {w.pret_6m_szt} - Pretow 12m: {w.pret_12m_szt} - Odpad: {w.odpad_proc}%
+                </div>
+                <button onClick={() => usunWynikOptymalizacji(w.wynik_id)} className="text-red-600 text-xs hover:underline">
+                  Usun
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabela - tablet/desktop */}
+          <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>
@@ -442,15 +620,16 @@ export default function DokumentacjaPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {zlecenieId && (
         <div className="card p-5 space-y-3">
           <div className="font-medium text-sm">Dodatkowe pozycje kosztowe</div>
-          <div className="flex flex-wrap gap-2 items-end print:hidden">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:items-end print:hidden">
             <select
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm"
+              className="border border-gray-300 rounded-md px-2 py-2 text-sm col-span-2 sm:col-span-1"
               value={nowyKoszt.kategoria}
               onChange={(e) => setNowyKoszt((k) => ({ ...k, kategoria: e.target.value }))}
             >
@@ -461,20 +640,21 @@ export default function DokumentacjaPage() {
               ))}
             </select>
             <input
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm w-48"
+              className="border border-gray-300 rounded-md px-2 py-2 text-sm col-span-2 sm:col-span-1 sm:w-48"
               placeholder="Opis"
               value={nowyKoszt.opis}
               onChange={(e) => setNowyKoszt((k) => ({ ...k, opis: e.target.value }))}
             />
             <input
               type="number"
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm w-20"
+              inputMode="decimal"
+              className="border border-gray-300 rounded-md px-2 py-2 text-sm sm:w-20"
               placeholder="Ilosc"
               value={nowyKoszt.ilosc}
               onChange={(e) => setNowyKoszt((k) => ({ ...k, ilosc: Number(e.target.value) }))}
             />
             <input
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm w-20"
+              className="border border-gray-300 rounded-md px-2 py-2 text-sm sm:w-20"
               placeholder="Jedn."
               value={nowyKoszt.jednostka}
               onChange={(e) => setNowyKoszt((k) => ({ ...k, jednostka: e.target.value }))}
@@ -482,47 +662,78 @@ export default function DokumentacjaPage() {
             <input
               type="number"
               step="0.01"
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm w-24"
+              inputMode="decimal"
+              className="border border-gray-300 rounded-md px-2 py-2 text-sm sm:w-24"
               placeholder="Cena jedn."
               value={nowyKoszt.cena_jednostkowa}
               onChange={(e) => setNowyKoszt((k) => ({ ...k, cena_jednostkowa: Number(e.target.value) }))}
             />
-            <button onClick={dodajKoszt} className="bg-gillmet-navy text-white text-sm px-3 py-2 rounded-md">
+            <button onClick={dodajKoszt} className="bg-gillmet-navy text-white text-sm px-3 py-2 rounded-md col-span-2 sm:col-span-1">
               Dodaj
             </button>
           </div>
 
           {kosztyDodatkowe.length > 0 && (
-            <table className="w-full text-sm mt-2">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                <tr>
-                  <th className="text-left px-3 py-2">Kategoria</th>
-                  <th className="text-left px-3 py-2">Opis</th>
-                  <th className="text-left px-3 py-2">Ilosc</th>
-                  <th className="text-left px-3 py-2">Jedn.</th>
-                  <th className="text-left px-3 py-2">Cena jedn.</th>
-                  <th className="text-left px-3 py-2">Wartosc</th>
-                  <th className="text-right px-3 py-2 print:hidden">Akcje</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
+            <>
+              {/* Karty - telefon */}
+              <div className="md:hidden divide-y divide-gray-100 -mx-5">
                 {kosztyDodatkowe.map((k) => (
-                  <tr key={k.pozycja_id}>
-                    <td className="px-3 py-2">{k.kategoria}</td>
-                    <td className="px-3 py-2">{k.opis}</td>
-                    <td className="px-3 py-2">{k.ilosc}</td>
-                    <td className="px-3 py-2">{k.jednostka}</td>
-                    <td className="px-3 py-2">{(k.cena_jednostkowa || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2">{((k.ilosc || 0) * (k.cena_jednostkowa || 0)).toFixed(2)}</td>
-                    <td className="px-3 py-2 text-right print:hidden">
-                      <button onClick={() => usunKoszt(k.pozycja_id)} className="text-red-600 text-xs hover:underline">
+                  <div key={k.pozycja_id} className="px-5 py-3 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-medium text-sm">{k.opis}</div>
+                        <div className="text-xs text-gray-400">{k.kategoria}</div>
+                      </div>
+                      <div className="text-sm font-medium text-gillmet-navy shrink-0">
+                        {((k.ilosc || 0) * (k.cena_jednostkowa || 0)).toFixed(2)} zl
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>
+                        {k.ilosc} {k.jednostka} x {(k.cena_jednostkowa || 0).toFixed(2)} zl
+                      </span>
+                      <button onClick={() => usunKoszt(k.pozycja_id)} className="text-red-600 hover:underline">
                         Usun
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Tabela - tablet/desktop */}
+              <div className="overflow-x-auto hidden md:block">
+                <table className="w-full text-sm mt-2">
+                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                    <tr>
+                      <th className="text-left px-3 py-2">Kategoria</th>
+                      <th className="text-left px-3 py-2">Opis</th>
+                      <th className="text-left px-3 py-2">Ilosc</th>
+                      <th className="text-left px-3 py-2">Jedn.</th>
+                      <th className="text-left px-3 py-2">Cena jedn.</th>
+                      <th className="text-left px-3 py-2">Wartosc</th>
+                      <th className="text-right px-3 py-2 print:hidden">Akcje</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {kosztyDodatkowe.map((k) => (
+                      <tr key={k.pozycja_id}>
+                        <td className="px-3 py-2">{k.kategoria}</td>
+                        <td className="px-3 py-2">{k.opis}</td>
+                        <td className="px-3 py-2">{k.ilosc}</td>
+                        <td className="px-3 py-2">{k.jednostka}</td>
+                        <td className="px-3 py-2">{(k.cena_jednostkowa || 0).toFixed(2)}</td>
+                        <td className="px-3 py-2">{((k.ilosc || 0) * (k.cena_jednostkowa || 0)).toFixed(2)}</td>
+                        <td className="px-3 py-2 text-right print:hidden">
+                          <button onClick={() => usunKoszt(k.pozycja_id)} className="text-red-600 text-xs hover:underline">
+                            Usun
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
