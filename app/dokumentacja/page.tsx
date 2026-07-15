@@ -338,7 +338,7 @@ export default function DokumentacjaPage() {
         {status && <div className="text-sm text-gray-700 bg-gray-50 rounded-md p-3">{status}</div>}
       </div>
 
-      <div className="flex gap-3 print:hidden">
+      <div className="flex flex-wrap gap-3 print:hidden">
         <button onClick={odswiezBom} disabled={busy || !zlecenieId} className="text-sm underline text-gillmet-steel disabled:opacity-40">
           Odswiez BOM
         </button>
@@ -362,6 +362,7 @@ export default function DokumentacjaPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm flex justify-between items-center">
             <span>Zestawienie materialowe (BOM) - edycja cen jednostkowych</span>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>
@@ -403,6 +404,7 @@ export default function DokumentacjaPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -411,6 +413,7 @@ export default function DokumentacjaPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">
             Optymalizacja ciecia (pret 6m vs 12m)
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>

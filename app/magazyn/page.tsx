@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteDostawaMagazynowa, getMagazyn, skanujDostawe, type DostawaMagazynowa } from "@/lib/api";
+import VoiceInput from "@/components/VoiceInput";
 
 export default function MagazynPage() {
   const [dostawy, setDostawy] = useState<DostawaMagazynowa[]>([]);
@@ -93,16 +94,19 @@ export default function MagazynPage() {
             <div className="text-xs text-gray-500">Wybrano: {files.map((f) => f.name).join(", ")}</div>
           )}
         </div>
-        <input
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
-          placeholder="Uwagi (opcjonalnie, np. nazwa hurtowni jesli nie jest widoczna na zdjeciu)"
-          value={uwagi}
-          onChange={(e) => setUwagi(e.target.value)}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+            placeholder="Uwagi (opcjonalnie, np. nazwa hurtowni jesli nie jest widoczna na zdjeciu) - lub podyktuj"
+            value={uwagi}
+            onChange={(e) => setUwagi(e.target.value)}
+          />
+          <VoiceInput onResult={(t) => setUwagi((prev) => (prev ? `${prev} ${t}` : t))} />
+        </div>
         <button
           onClick={wyslijSkan}
           disabled={busy}
-          className="bg-gillmet-accent text-gillmet-navy font-semibold text-sm px-4 py-2 rounded-md disabled:opacity-50"
+          className="w-full sm:w-auto bg-gillmet-accent text-gillmet-navy font-semibold text-sm px-4 py-2 rounded-md disabled:opacity-50"
         >
           Wyslij do AI - odczytaj dostawe
         </button>
@@ -122,26 +126,28 @@ export default function MagazynPage() {
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">
             Stan magazynowy (suma dostaw wedlug profilu)
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="text-left px-4 py-2">Profil</th>
-                <th className="text-left px-4 py-2">Gatunek</th>
-                <th className="text-left px-4 py-2">Ilosc</th>
-                <th className="text-left px-4 py-2">Jednostka</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {stanMagazynowy.map((s) => (
-                <tr key={`${s.profil}-${s.gatunek}-${s.jednostka}`}>
-                  <td className="px-4 py-2 font-medium">{s.profil}</td>
-                  <td className="px-4 py-2">{s.gatunek}</td>
-                  <td className="px-4 py-2">{s.ilosc}</td>
-                  <td className="px-4 py-2">{s.jednostka}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="text-left px-4 py-2">Profil</th>
+                  <th className="text-left px-4 py-2">Gatunek</th>
+                  <th className="text-left px-4 py-2">Ilosc</th>
+                  <th className="text-left px-4 py-2">Jednostka</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {stanMagazynowy.map((s) => (
+                  <tr key={`${s.profil}-${s.gatunek}-${s.jednostka}`}>
+                    <td className="px-4 py-2 font-medium">{s.profil}</td>
+                    <td className="px-4 py-2">{s.gatunek}</td>
+                    <td className="px-4 py-2">{s.ilosc}</td>
+                    <td className="px-4 py-2">{s.jednostka}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -154,42 +160,44 @@ export default function MagazynPage() {
       {!loading && dostawy.length > 0 && (
         <div className="card overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 font-medium text-sm">Historia dostaw</div>
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="text-left px-4 py-2">Data</th>
-                <th className="text-left px-4 py-2">Dostawca</th>
-                <th className="text-left px-4 py-2">Dokument</th>
-                <th className="text-left px-4 py-2">Profil</th>
-                <th className="text-left px-4 py-2">Gatunek</th>
-                <th className="text-left px-4 py-2">Dlugosc [mm]</th>
-                <th className="text-left px-4 py-2">Ilosc</th>
-                <th className="text-left px-4 py-2">Uwagi</th>
-                <th className="text-right px-4 py-2">Akcje</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {dostawy.map((d) => (
-                <tr key={d.pozycja_id}>
-                  <td className="px-4 py-2 text-gray-500">{d.data_dostawy || "-"}</td>
-                  <td className="px-4 py-2">{d.dostawca || "-"}</td>
-                  <td className="px-4 py-2 text-gray-500">{d.numer_dokumentu || "-"}</td>
-                  <td className="px-4 py-2 font-medium">{d.profil}</td>
-                  <td className="px-4 py-2">{d.gatunek}</td>
-                  <td className="px-4 py-2">{d.dlugosc_mm || "-"}</td>
-                  <td className="px-4 py-2">
-                    {d.ilosc} {d.jednostka}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-gray-400">{d.uwagi || "-"}</td>
-                  <td className="px-4 py-2 text-right">
-                    <button onClick={() => usunPozycje(d.pozycja_id)} className="text-red-600 text-xs hover:underline">
-                      Usun
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="text-left px-4 py-2">Data</th>
+                  <th className="text-left px-4 py-2">Dostawca</th>
+                  <th className="text-left px-4 py-2">Dokument</th>
+                  <th className="text-left px-4 py-2">Profil</th>
+                  <th className="text-left px-4 py-2">Gatunek</th>
+                  <th className="text-left px-4 py-2">Dlugosc [mm]</th>
+                  <th className="text-left px-4 py-2">Ilosc</th>
+                  <th className="text-left px-4 py-2">Uwagi</th>
+                  <th className="text-right px-4 py-2">Akcje</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {dostawy.map((d) => (
+                  <tr key={d.pozycja_id}>
+                    <td className="px-4 py-2 text-gray-500">{d.data_dostawy || "-"}</td>
+                    <td className="px-4 py-2">{d.dostawca || "-"}</td>
+                    <td className="px-4 py-2 text-gray-500">{d.numer_dokumentu || "-"}</td>
+                    <td className="px-4 py-2 font-medium">{d.profil}</td>
+                    <td className="px-4 py-2">{d.gatunek}</td>
+                    <td className="px-4 py-2">{d.dlugosc_mm || "-"}</td>
+                    <td className="px-4 py-2">
+                      {d.ilosc} {d.jednostka}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-gray-400">{d.uwagi || "-"}</td>
+                    <td className="px-4 py-2 text-right">
+                      <button onClick={() => usunPozycje(d.pozycja_id)} className="text-red-600 text-xs hover:underline">
+                        Usun
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

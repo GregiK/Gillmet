@@ -33,7 +33,7 @@ export default function ZapomnianeHasloPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gillmet-bg">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gillmet-bg px-4">
       <div className="card w-full max-w-sm p-6 space-y-5">
         <div>
           <div className="text-lg font-semibold text-gillmet-navy tracking-wide">GILLMET</div>

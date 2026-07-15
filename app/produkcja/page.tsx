@@ -64,6 +64,7 @@ export default function ProdukcjaPage() {
 
       {!loading && !error && (
         <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
               <tr>
@@ -103,6 +104,7 @@ export default function ProdukcjaPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
